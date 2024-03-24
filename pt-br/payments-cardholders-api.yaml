@@ -1,0 +1,863 @@
+openapi: 3.0.0
+info:
+  title: AP API
+  version: '1.0'
+  description: |
+     **Bem-vindo à API de Portadores!**
+    
+      A API de Portadores é responsável por gerenciar as informações cadastrais de um portador de cartão da PaymentsCompany. Esta API permite que mantenha os dados cadastrais dos portadores atualizados e bloqueie o cartão do portador, caso o portador tenha sido vítima de fraude ou perda do cartão.
+      
+      Com o código de identificação do portador (`idPortador`), utilize os  *endpoints* da API para:
+      
+      - Consultar as informações cadastrais de um portador;
+      - Atualizar as informações cadastrais de um portador e;
+      - Bloquear um portador.
+      
+      
+      Além disso, gerencie as informações de telefone do portador com o código identificação do portador (`idPortador`) e do código de identificação do telefone (`idTelefone`) com os seguintes *endpoints*:
+      - Adicionar o telefone ao registro do portador;
+      - Consultar o telefone de um portador e;
+      - Excluir o telefone de um portador.
+      
+  
+     ## Pré-requisitos
+      
+      As requisições dos *endpoints* API de Portadores são feitas a partir do código de identificação do portador (`idPortador`) como `path parameter` nos *endpoints*, por isso certifique-se de obter essa informação nos seguintes *endpoints*:
+      - **Para portador pessoa física**: [Portadores > Listar cliente pelo CPF]().
+      - **Para portador pessoa jurídica**: [Portadores > Listar cliente pelo CNPJ]().
+tags:
+  - name: 'Autenticação'
+    description: 'Nesta seção, você encontra os endpoints de autenticação para fazer as requisições dos endpoints da API.'
+  - name: 'Portadores'
+    description: 'Nesta seção, você encontra os endpoints para fazer as atualizações cadastrais do portador do cartão. '
+servers:
+  - url: https://payments-api.paycomp.tech/api/v1/
+    description: 'Produção'
+paths:
+  /oauth2/token:
+    post:
+      security:
+        - Authentication: []
+      summary: 'Gerar token de acesso'
+      tags:
+        - 'Autenticação'
+      servers:
+          - url: https://payments-api.paycomp.tech
+            description: 'Sobrescrever o server para o basepath de autenticação'
+      description: |
+        Utilize este endpoint para gerar o token de acesso às requisições dos endpoints.
+        Para isso, forneça o tipo de acesso (`grant_type`), o seu nome de usuário (`username`) e a senha de autorização (`password`) à API.
+      operationId: post-oauth2-token
+      parameters:
+        - in: header
+          name: 'Content-type'
+          schema: 
+            type: string
+          description: 'Tipo do conteúdo do corpo da solicitação. <br/> **Nota**: Este campo deve ser sempre `application/x-www-form-urlencoded` '
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Autenticacao'
+      responses:
+        '201':
+          description: 'Se a requisição for processada com sucesso, o *endpoint* retorna as informações do token gerado.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '400':
+          description: 'Este erro indica que houve um problema no lado do cliente durante o processamento. As possíveis causas podem ser campo obrigatório não preenchido, formato do campo digitado errado.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/400Response'
+        '404':
+          description: 'Este erro indica que houve um problema para localizar o recurso da requisição enviada. As possíveis causas deste problema podem ser *path* do *endpoint* digitado incorretamente e método da requisição HTTP incorreto.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404Response'
+        '500':
+          description: 'Este erro indica que houve um problema no servidor da PaymentsCompany. Caso o erro persista, entre em contato com a central de suporte das APIs da PaymentsCompany para investigarem a causa e solucionarem o problema.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/500Response'
+  /portadores/{idPortador}:
+    get:
+      security:
+        - Authorization: []
+      summary: 'Consultar o cadastro de um portador'
+      tags:
+        - Portadores
+      description: |
+        Utilize este endpoint para consultar as informações cadastrais de um portador de cartão informando o código de identificação do portador (`idPortador`) no pathda requisição.
+      operationId: get-portadores-id
+      parameters:
+        - in: path
+          name: idPortador
+          schema:
+            type: integer
+          required: true
+          description: 'Código de identificação do portador.'
+          example: 2001
+      responses:
+        '200':
+          description: 'Se a requisição foi processada com sucesso, o *endpoint* retorna as informações cadastrais do portador.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortadorResponse'
+        '400':
+          description: 'Este erro indica que houve um problema no lado do cliente durante o processamento. As possíveis causas podem ser campo obrigatório não preenchido, formato do campo digitado errado.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/400Response'
+        '404':
+          description: 'Este erro indica que houve um problema para localizar o recurso da requisição enviada. As possíveis causas deste problema podem ser *path* do *endpoint* digitado incorretamente e método da requisição HTTP incorreto.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404Response'
+        '500':
+          description: 'Este erro indica que houve um problema no servidor da PaymentsCompany. Caso o erro persista, entre em contato com a central de suporte das APIs da PaymentsCompany para investigarem a causa e solucionarem o problema.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/500Response'
+    patch:
+      security:
+        - Authorization: []
+      summary: 'Alterar dados do portador'
+      description: 'Utilize este endpoint para atualizar alguma informação específica do portador do cartão. Para isso, informe o código de identificação do portador (`idPortador`) no *path* da requisição e adicione as campos com as novas informações que serão alteradas no body.'
+      tags:
+        - Portadores
+      operationId: patch-portadores-id
+      parameters:
+        - in: path
+          name: idPortador
+          schema:
+            type: integer
+          description: 'Código de identificação do portador.'
+          example: 1002
+          required: true
+        - in: header
+          name: 'Content-type'
+          schema:
+            type: string
+          description: 'Tipo do conteúdo do corpo da solicitação.'
+          required: true
+        - in: header
+          name: 'Authorization'
+          schema:
+            type: string
+          description: 'Conteúdo do token de acesso fornecido pela PaymentsCompany.'
+        - in: header
+          name: 'accept'
+          schema:
+            type: string
+          description: 'Tipo do conteúdo aceito.'
+      requestBody:
+        description: 'Conteúdo do corpo da requisição.'
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PortadorRequest'
+      responses:
+        '200':
+          description: 'Se a requisição foi processada com sucesso, o *endpoint* retorna o status 200 que confirma a alteração das dados enviados na requisição.'
+        '400':
+          description: 'Este erro indica que houve um problema no lado do cliente durante o processamento. As possíveis causas podem ser campo obrigatório não preenchido, formato do campo digitado errado.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/400Response'
+        '404':
+          description: 'Este erro indica que houve um problema para localizar o recurso da requisição enviada. As possíveis causas deste problema podem ser *path* do *endpoint* digitado incorretamente e método da requisição HTTP incorreto.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404Response'
+        '500':
+          description: 'Este erro indica que houve um problema no servidor da PaymentsCompany. Caso o erro persista, entre em contato com a central de suporte das APIs da PaymentsCompany para investigarem a causa e solucionarem o problema.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/500Response'
+  /portadores/{idPortador}/telefones:
+    parameters:
+      - in: path
+        name: idPortador
+        schema:
+          type: integer
+        description: 'Código de identificação do portador.'
+        required: true
+      - in: header
+        name: 'Content-type'
+        schema:
+          type: string
+        description: 'Tipo do conteúdo do corpo da solicitação.'
+        required: true
+      - in: header
+        name: 'Authorization'
+        schema:
+          type: string
+        description: 'Conteúdo do token de acesso fornecido pela PaymentsCompany.'
+      - in: header
+        name: 'accept'
+        schema:
+          type: string
+        description: 'Tipo do conteúdo aceito.'
+    get:
+      security:
+        - Authorization: []
+      summary: Consultar telefones do portador do cartão
+      description: 'Utilize este endpoint para consultar os telefones de um portador de cartão informando o código de identificação do portador (`idPortador`) no path da requisição.'
+      tags:
+        - Portadores
+      operationId: get-portadores-id-telefones
+      responses:
+        '200':
+          description: 'Se a requisição foi processada com sucesso, o *endpoint* retorna as informações dos telefones do portador.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelefonesResponse'
+        '400':
+          description: 'Este erro indica que houve um problema no lado do cliente durante o processamento. As possíveis causas podem ser campo obrigatório não preenchido, formato do campo digitado errado.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/400Response'
+        '404':
+          description: 'Este erro indica que houve um problema para localizar o recurso da requisição enviada. As possíveis causas deste problema podem ser *path* do *endpoint* digitado incorretamente e método da requisição HTTP incorreto.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404Response'
+        '500':
+          description: 'Este erro indica que houve um problema no servidor da PaymentsCompany. Caso o erro persista, entre em contato com a central de suporte das APIs da PaymentsCompany para investigarem a causa e solucionarem o problema.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/500Response'
+    post:
+      security:
+        - Authorization: []
+      summary: 'Cadastrar telefone do portador do cartão'
+      description: 'Utilize este endpoint para incluir um novo número de telefone aos dados do portador do cartão. Para isso, insira o código de identificação do portador (`idPortador`) no `path` da requisição.'
+      tags:
+        - Portadores
+      requestBody:
+        description: 'Conteúdo do corpo da solicitação.'
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelefoneRequest'
+      responses:
+        '201':
+          description: 'Se a requisição foi processada com sucesso, o *endpoint* retorna as informações do telefone do portador.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelefoneResponse'
+        '400':
+          description: 'Este erro indica que houve um problema no lado do cliente durante o processamento. As possíveis causas podem ser campo obrigatório não preenchido, formato do campo digitado errado.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/400Response'
+        '404':
+          description: 'Este erro indica que houve um problema para localizar o recurso da requisição enviada. As possíveis causas deste problema podem ser *path* do *endpoint* digitado incorretamente e método da requisição HTTP incorreto.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404Response'
+        '500':
+          description: 'Este erro indica que houve um problema no servidor da PaymentsCompany. Caso o erro persista, entre em contato com a central de suporte das APIs da PaymentsCompany para investigarem a causa e solucionarem o problema.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/500Response'
+  /portadores/{idPortador}/telefones/{idTelefone}:
+    parameters:
+        - in: path
+          schema:
+            type: integer
+          name: idPortador
+          description: 'Código de identificação do portador.'
+          required: true
+        - in: path
+          schema:
+            type: integer
+          name: idTelefone
+          description: 'Código de identificação do telefone.'
+          required: true
+    delete:
+      security:
+        - Authorization: []
+      summary: Excluir telefone do portador
+      tags:
+        - Portadores
+      description: 'Utilize este endpoint para excluir o número do telefone do portador do cartão. Para isso, no path do endpoint informe o código de identificação do portador do cartão (`idPortador`) e o código de identificação do telefone (`idTelefone`).'
+      parameters:
+        - in: header
+          name: 'Authorization'
+          schema:
+            type: string
+          description: 'Conteúdo do token de acesso fornecido pela PaymentsCompany.'
+        - in: header
+          name: 'accept'
+          schema:
+            type: string
+          description: 'Tipo do conteúdo aceito.'
+      responses:
+        '200':
+          description: 'Se a requisição foi processada com sucesso, o *endpoint* retorna o status `OK`.'
+        '400':
+          description: 'Este erro indica que houve um problema no lado do cliente durante o processamento. As possíveis causas podem ser campo obrigatório não preenchido, formato do campo digitado errado.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/400Response'
+        '404':
+          description: 'Este erro indica que houve um problema para localizar o recurso da requisição enviada. As possíveis causas deste problema podem ser *path* do *endpoint* digitado incorretamente e método da requisição HTTP incorreto.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404Response'
+        '500':
+          description: 'Este erro indica que houve um problema no servidor da PaymentsCompany. Caso o erro persista, entre em contato com a central de suporte das APIs da PaymentsCompany para investigarem a causa e solucionarem o problema.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/500Response'
+  /portadores/bloqueios:
+    parameters:
+      - in: header
+        name: 'Content-type'
+        schema:
+          type: string
+        description: 'Tipo do conteúdo do corpo da solicitação.'
+        required: true
+      - in: header
+        name: 'Authorization'
+        schema:
+          type: string
+        description: 'Conteúdo do token de acesso fornecido pela PaymentsCompany.'
+      - in: header
+        name: 'accept'
+        schema:
+          type: string
+        description: 'Tipo do conteúdo aceito.'
+    post:
+      security:
+        - Authorization: []
+      summary: Bloquear cartão do portador
+      description: | 
+        'Utilize este endpoint para efetuar o bloqueio do cartão do portador, em caso de furto ou roubo. Para isso, adicione no body as seguintes informações:
+        - ID do tipo do bloqueio (`idtipoBloqueio`): Tipo do bloqueio.
+        - ID do titular (`idTitular`): Código de identificação do portador.
+        - ID do usuário (`idUsuario`): Código de identificação do usuário que está realizando a operação de bloquear o portador.
+        - Observação (`observacao`): Descrição do motivo do bloqueio.'
+      tags:
+        - Portadores
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BloqueioResquest'
+      responses:
+        '200':
+          description: 'Se a requisição foi processada com sucesso, o *endpoint* retorna as informações pertinentes ao bloqueio efetuado.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BloqueioResponse'
+        '400':
+          description: 'Este erro indica que houve um problema no lado do cliente durante o processamento. As possíveis causas podem ser campo obrigatório não preenchido, formato do campo digitado errado.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/400Response'
+        '404':
+          description: 'Este erro indica que houve um problema para localizar o recurso da requisição enviada. As possíveis causas deste problema podem ser *path* do *endpoint* digitado incorretamente e método da requisição HTTP incorreto.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404Response'
+        '500':
+          description: 'Este erro indica que houve um problema no servidor da PaymentsCompany. Caso o erro persista, entre em contato com a central de suporte das APIs da PaymentsCompany para investigarem a causa e solucionarem o problema.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/500Response'
+components:
+  schemas: 
+    Autenticacao:
+      description: 'Objeto da requisição de autenticação.'
+      type: object
+      required:
+        - grant_type
+        - username
+        - password
+      properties:
+        grant_type:
+          type: string
+          description:  |
+            Tipo do token de acesso.
+            
+            Por exemplo, `password`.
+          example: 'password'
+        username:
+          type: string
+          description: |
+            Nome do usuário que tem acesso à API.
+            
+            Por exemplo, `PaymentsCompany-sandbox`.
+          example: 'PaymentsCompany-sandbox'
+        password:
+          type: string
+          description: | 
+            Senha de acesso do usuário.
+            
+            Por exemplo, `1PaymentsCompany@dmi4.22`
+          example: '1PaymentsCompany@dmi4.22'
+    Token:
+      description: 'Objeto de resposta de autenticação.'
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: 'Token assinado com algoritmo de 512 bits.'
+          example: "eyJhbGciOiJIUzUxMiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICIwZDI1NmI2MS03Y2RhLTQ5MzItYjVmNS1hZGIxOGUyNzc3MDQifQ.eyJleHAiOjE3MTA5ODkyNTMsImlhdCI6MTcxMDk3MTI1MywianRpIjoiMGM0N2Y3YTQtYzQ0NC00YTczLWE0NWQtNDYwN2ZkMTlkOTIxIiwiaXNzIjoiaHR0cDovL25sYi1ob3Jpem9uLXNiLTA2OTY0ZGJiN2NlMDhjYjguZWxiLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tL3JlYWxtcy9ycGUiLCJzdWIiOiI0ZjZiYzRlOC0xNGNiLTRiZTgtYjgzYya5Y2IxM2EzY2I5ZDAiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJycGVjbGllbnQiLCJzZXNzaaW9uX3N0YXRlIjoiMmIwOTgwNGItZGIwMi00NjNmLWFjYjYtODFjODY5YWVjYjE0Iiwic2NvcGUiOiJwcm9maWxlIiwic2lkIjoiMmIwOTgwNGItZGIwMi00NjNmLWFjYjYtODFjODY5YWVjXjE0IiwiaXNzdWVyaWQiOjEsInJvbGVzIjpbIlJPTEVfU0lTVEVNQSIsIlJPTEVfUEFDT1RFX1NNU19DT05TVUxUQV9MSVNUQSIsIlJPTEVfQ09OU1VMVEFSX1BPUlRBRE9SIiwiUk9MRV9DQVJUT0VTX0FETUlOIiwiUk9MRV90ZXN0ZS1asb2xlIiwiUk9MRV9QQUNPVEVfU01TX0NPTlNVTFRBX1BBQ09URVNfRElTUE9OSVZFSVMiLCJST0xFX1BBQ09URV9TTVNfQUxURVJBQ0FPX1JFQ0VCRV9CT05VU19DRUxVTEFSIiwiUk9MRV91bWFfcHJvdGVjdGlvbiIsIlJPTEVfUEFDT1RFX1NNU19DQURBU1RST19DT05UUkFUQUNBT19QQUNPVEUiLCJST0xFX1BBQ09URV9TTVNfQ0FEQVNUUk9fQ0VMVUxBUl9TTVMiLCST0xFX1BBQ09URV9TTVNfQ09OU1VMVEFfUEFDT1RFU19DT05UUkFUQURPUyIsIlJPTEVfQURNSU4iLCJST0xFX1BBQ09URV9TTVNfUkVNT0NBT19QQUNPVEUiXSwidXNlcm5hbWUiOiJycGUtc2FuZGJveCJ9.ENKrUg1iXA3IBfDTDvp9CXMg_pgGi87NQK6hB9gK_LG5w6FumuQyeYScFNu4qxI0gxl8G8Mfo8eYu8YXpr5tt"
+        expires_in:
+          type: integer
+          description: 'Tempo de expiração do código em minutos a partir de sua geração.'
+          default: 17999
+        refresh_expires_in:
+          type: integer
+          description: |
+            Quantidade de tentativas para expirar o refresh token. 
+            O valor vem zerado, pois o refresh_token não expira por tempo e sim por quantidade de tentativas (3).
+          default: 0
+        token_type:
+          type: string 
+          description: 'Tipo do token gerado.'
+          default: Bearer
+        not-before-policy:
+          type: integer
+          description: | 
+            **Parâmetro interno.** Você não irá utilizar essa informação.
+            Se percebermos que houve comprometimento de algum token nós utilizamos esse parâmetro para invalidar todos os tokens gerados naquele período de tempo.
+        session_state:
+          type: string
+          description: '**Parâmetro interno.** Você não irá utilizar esse informação. Código de identificação da sessão.'
+        scope:
+          type: string
+          description: '**Parâmetro interno.** Você não irá utilizar esse informação. Escopo incluso no acesso ao token.'
+    PortadorResponse:
+      description: 'Objeto das informações cadastrais do portador.'
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 'Código de identificação do portador.'
+          example: 2001
+        nome:
+          type: string
+          description: 'Nome completo do portador.'
+          example: "José da Silva"
+        rg:
+          type: string
+          description: 'Número do RG do portador. Somente números.'
+          example: "8068564"
+        cpf:
+          type: string
+          description: 'Número do CPF do portador. Somente números.'
+          example: '89095453219'
+        cartao:
+          type: string
+          description: 'Número do cartão do portador.'
+          example: '00001231313444488'
+        email:
+          type: string
+          description: 'Endereço de e-mail do portador.'
+          example: 'servicedesk@neus.com.br'
+        numeroCartaoTruncado:
+          type: string
+          description: 'Númereo truncado do cartão do portador. Exibindo somente os 4 números iniciais e os 4 números finais. Os demais números estão mascarados com a letra X.'
+          example: '0000XXXXXXXX4488' 
+        clienteDataNascimento:
+          type: string
+          description: 'Data de nascimento do portador no formato `yyyy-MM-dd`'
+          example: '1970-01-01'
+        rendas:
+          type: array
+          description: 'Lista do registro de renda do portador.'
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: 'Código de identificação do registro da renda.'
+                example: 19
+              valor:
+                type: number
+                description: 'Valor da renda do portador.'
+                example: 5000.00
+              comprovada:
+                type: string
+                description: 'Indica se a renda é comprovada. Se sim, o valor é `S` e, se não é comprovada, o valor é `N`.'
+                example: 'S'
+              idPessoa:
+                type: string
+                description: 'Código de identificação da pessoa.'
+                example: 19
+              principal:
+                type: string
+                description: 'Indica se a renda é a renda principal. <br> **Nota:** Este campo é presente apenas para processadora Cards.'
+                deprecated: true
+              origem:
+                type: string
+                description: 'Indica a origem da renda.  <br>**Nota:** Este campo é presente apenas para processadora Cards.'
+                deprecated: true
+        statusCliente:
+          type: string
+          description: 'Indica se o cliente está ativo ou não. Se o cliente estiver ativo o valor é `A`, caso contrário o valor é `I`.'
+          example: 'A'
+        statusAnalise:
+          type: string
+          description: 'Indica se o status de análise financeira do portador do cartão está em processamento. Se sim, o status é `A`.'
+          example: 'A'
+        contratoImpresso:
+          type: string 
+          description: 'Indica o contrato foi impresso. Se sim, o valor é `S`, caso contrário o valor é `N`.'
+          example: 'S'
+        estanoCobranca:
+          type: string 
+          description: 'Indica se o portador está em cobrança. Se sim, o valor é `S`, caso contrário o valor é `N`.'
+          example: 'S'
+        ultimoMotivoBloqueioCliente:
+          type: string
+          description: 'Descrição do motivo do último bloqueio do portador.'
+          example: "Furto do cartão"
+        extratoClienteResponse:
+          type: object
+          description: 'Objeto das informações financeiras do extrato do portador.'
+          properties:
+            limite:
+              type: number
+              description: 'Valor do limite disponível para o portador.'
+              example: 7000.00
+            saldoDisponivel:
+              type: number
+              description: 'Valor do saldo disponível para compras.'
+              example: 1600.00
+            saldoReservado:
+              type: number
+              description: 'Valor do saldo reservado para o limite do cartão. '
+              example: 3000.00
+            saldoParceladoDisp: 
+              type: number
+              description: 'Valor do saldo parcelado disponível.'
+              example: 2000.00
+            limiteParcelado:
+              type: number
+              description: 'Valor do limite disponível para parcelamentos acima de 2 parcelas.'
+              example: 2000.00
+            devedorTotal:
+              type: number
+              description: 'Valor total da quantia que falta para quitar o cartão de crédito.'
+              example: 1500.00
+            utilizaLimiteExtra:
+              type: boolean
+              description: 'Indica se o portador utilizou o limite extra do cartão de crédito.'
+              example: true
+            valorLimiteExtra:
+              type: number
+              description: 'Valor do limite extra disponível do cartão de crédito.  '
+              example: 700.00
+            limiteExtraTotal:
+              type: number
+              description: 'Valor total do limite extra do cartão de crédito.   '
+              example: 800.00
+            saldoDisponivelExtra:
+              type: number
+              description: 'Valor do saldo extra disponível no cartão de crédito.   '
+            valorFaturaFechada:
+              type: number
+              description: 'Valor da fatura das compras e parcelamentos contabilizados após o fechamento do período.'
+              example: 35.00
+            clienteEmBloqueioJuridico:
+              type: boolean
+              description: 'Indica se o cliente se encontra em bloqueio jurídico (true) ou não (false).'
+              example: true.
+        valorLancamentosFuturos:
+          type: number
+          description: Valor total dos lançamentos futuros.
+          example: 2000.00
+        pontuacaoFidelidadeResponse:
+          type: object
+          description: 'Objeto das informações de pontuação de fidelidade do portador.'
+          properties:
+            idCliente:
+              type: integer
+              description: 'Código de identificação do portador. '
+              example: 19
+              deprecated: true
+            valorPontuacao:
+              type: integer
+              description: 'Valor da pontuação.  '
+              example: 100
+              deprecated: true
+            descricaoPrograma:
+              type: string
+              description: 'Descrição do programa de fidelidade aplicado.'
+              example: "Programa 1"
+    PortadorRequest:
+      description: 'Objeto das informações cadastrais do portador.'
+      type: object
+      properties:
+        nome:
+          type: string
+          description: 'Nome completo do portador.'
+          example: "José da Silva"
+        email:
+          type: string
+          description: 'Endereço de e-mail do portador. '
+          example: 'servicedesk@neus.com.br'
+        nacionalidade:
+          type: string
+          description: 'Nacionalidade do portador.' 
+          example: 'BRASILEIRA'
+        cidadeNatal:
+          type: string
+          description: 'Cidade de origem do portador.'
+          example: 'SÃO PAULO'
+        estadoNatal:
+          type: string
+          description: 'Sigla do estado de origem do portador com 2 dígitos.'
+          example: 'SP'
+    TelefoneRequest:
+      type: object
+      description: 'Objeto de requisição do telefone do portador do cartão.'
+      required: 
+        - tipo
+        - area
+        - telefone
+      properties:
+        tipo:
+          description: 'Tipo do número do telefone. Os valores possíveis são `CELULAR` ou `FIXO`.'
+          type: string
+          example: 'CELULAR'
+        ramal:
+          description: 'Número do ramal do telefone com 4 dígitos.'
+          type: string
+          example: '4020'
+        area:
+          description: 'Código de área do telefone com 2 dígitos. Somente números.'
+          type: string
+          example: '83'
+        telefone:
+          description: 'Número do telefone sem o código de área. Somente números.'
+          type: string
+          example: '987227887'
+        receberSMS:
+          description: 'Indica o telefone está habilitado para receber SMS pertinente ao produto.   '
+          type: boolean
+          example: true
+          deprecated: true
+        faturaDigital:
+          description: 'Indica se o telefone está habilitado para receber a fatura digital.   '
+          type: boolean
+          example: true
+          deprecated: true
+    TelefoneResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 'Código de identificação do telefone.'
+          example: 1200
+        area:
+          type: string
+          description: 'Código de área do telefone do portador com 2 dígitos.'
+          example: 12
+        tipo: 
+          type: string
+          description: 'Tipo do telefone do portador.'
+          enum: ['RESIDENCIAL', 'CELULAR', 'COMERCIAL', 'REFERENCIA', 'OUTRO']
+          example: RESIDENCIAL
+        numero:
+          type: string
+          description: 'Número do telefone do portador sem o código de área.  Caso o tipo seja CELULAR, deve começar com um dos seguintes caracteres: `9`,`8`,`7` ou `6`.'
+          example: '991322219'
+        ramal:
+          type: string
+          description: 'Número do ramal do telefone, com 4 dígitos, se houver.' 
+          example: '3399'
+        utilizadoFaturaDigital:
+          type: boolean
+          description: 'Indica se o número de telefone é utilizado para o envio da fatura digital. '
+          example: false
+        utilizadoServicoSms:
+          type: boolean
+          description: 'Indica se o número de telefone é utilizado para o envio da fatura digital.'
+          example: false
+        utilizadoTaxaBonificada:
+          type: boolean
+          description: 'Indica se o número de telefone utiliza a taxa bonificada.'
+          example: false
+        isRecebeFaturaSms:
+          type: boolean
+          description: 'Indica se o número de telefone está habilitado para receber a fatura via SMS.  '
+          example: false
+    TelefonesResponse:
+      type: array
+      description: 'Objeto com as informações dos telefones do portador.'
+      items:
+        $ref: '#/components/schemas/TelefoneResponse'
+    BloqueioResquest:
+      type: object
+      description: 'Objeto de requisição do bloqueio do portador.'
+      properties:
+        idTipoBloqueio:
+          type: integer
+          description: 'Tipo do bloqueio do portador. Os valores possíveis são `1` (Cartão fraudado), `2` (Perda do cartão).'
+          example: 1
+        idTitular:
+          type: integer
+          description: Código de identificação do portador.
+          example: 2001
+        idUsuario:
+          type: integer
+          description: 'Código de identificação do usuário que está efetuando a operação de bloqueio.'
+          example: 154
+        observacao:
+          type: string
+          description: 'Descrição de observações relevantes ao bloqueio.'
+          example: 'Bloqueio por fraude no cartão.'
+    BloqueioResponse:
+      type: object
+      description: 'Objeto de resposta do bloqueio do portador.'
+      properties:
+        idCliente:
+          type: integer
+          description: 'Código de identificação do portador.'
+          example: 2001
+        id:
+          type: integer
+          description: 'Código de identificação da ação do bloqueio.'
+          example: 121
+        dataBloqueio:
+          type: string
+          description: 'Data e hora em que foi feito o bloqueio do portador no formato `YYYY-MM-DDTHH:MM:SS.u`'
+    400Response:
+      type: object
+      description: 'Objeto do erro 400 em caso de erro no lado do cliente.'
+      properties:
+        tipoErro:
+          type: object
+          description: Informações do tipo do erro
+          properties:
+            codigo:
+              description: Código do tipo do erro.
+              type: integer
+              example: 400
+            descricao:
+              description:  Descrição do tipo do erro gerado.
+              type: string
+              example: 'Bad request - Requisição não processada devido a alguma coisa que foi entendida como um erro do cliente'
+        erro:
+          type: object
+          description: 'Informações do erro gerado durante a requisição.'
+          properties:
+            codigo:
+              type: integer
+              description: 'Código do erro gerado.'
+              example: 001
+            mensagem:
+              type: string
+              description: Descrição do erro.
+              example: 'Campo obrigatório <nome_campo> não preenchido.'
+        timestamp:
+          type: string
+          description: 'Data e hora em que o sistema identificou o erro no formato `YYYY-MM-DDTHH:MM:SS.u`'
+          example: '2023-12-02T05:42:56.4'
+    404Response:
+      type: object
+      description: 'Objeto do erro 404 em caso do servidor não encontrar uma representação do recurso enviado.'
+      properties:
+        tipoErro:
+          type: object
+          description: Informações do tipo do erro
+          properties:
+            codigo:
+              description: Código do tipo do erro.
+              type: integer
+              example: 404
+            descricao:
+              description:  Descrição do tipo do erro gerado.
+              type: string
+              example: 'Not found - Requisição não processada devido o servidor não encontrar uma representação do recurso enviado que retorne sucesso.'
+        erro:
+          type: object
+          description: 'Informações do erro gerado durante a requisição.'
+          properties:
+            codigo:
+              type: integer
+              description: 'Código do erro gerado.'
+              example: 001
+            mensagem:
+              type: string
+              description: Descrição do erro.
+              example: 'Campo obrigatório <nome_campo> não preenchido.'
+        timestamp:
+          type: string
+          description: 'Data e hora em que o sistema identificou o erro no formato `YYYY-MM-DDTHH:MM:SS.u`'
+          example: '2023-12-02T05:42:56.4'
+    500Response:
+      type: object
+      description: 'Objeto do erro 500 em caso de erro no lado do servidor.'
+      properties:
+        tipoErro:
+          type: object
+          description: Informações do tipo do erro
+          properties:
+            codigo:
+              description: Código do tipo do erro.
+              type: integer
+              example: 500
+            descricao:
+              description:  Descrição do tipo do erro gerado.
+              type: string
+              example: 'Internal server error - Requisição não processada devido a um problema no servidor da PaymentsCompany.'
+        erro:
+          type: object
+          description: 'Informações do erro gerado durante a requisição.'
+          properties:
+            codigo:
+              type: integer
+              description: 'Código do erro gerado.'
+              example: 001
+            mensagem:
+              type: string
+              description: Descrição do erro.
+              example: 'Campo obrigatório <nome_campo> não preenchido.'
+        timestamp:
+          type: string
+          description: 'Data e hora em que o sistema identificou o erro no formato `YYYY-MM-DDTHH:MM:SS.u`'
+          example: '2023-12-02T05:42:56.4'
+  securitySchemes: 
+    Authorization:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    Authentication:
+      type: apiKey
+      in: header
+      name: Authorization
